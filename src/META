@@ -1,0 +1,5 @@
+name = "lang_python"
+version = "0.1"
+description = "Python code parser and pretty printer"
+archive(byte) = "lang_python.cma"
+archive(native) = "lang_python.cmxa"

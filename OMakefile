@@ -1,0 +1,5 @@
+.PHONY: install uninstall clean
+.SUBDIRS: src
+
+clean:
+	rm -f *.omc

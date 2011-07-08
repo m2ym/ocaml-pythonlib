@@ -1,0 +1,22 @@
+PACKAGE = Lang_python
+LIBRARY = lang_python
+USE_OCAMLFIND = true
+#MENHIR_ENABLED = true
+
+FILES[] = ast lexer lexer_state parser parse dump
+PACK = $(OCamlPackage $(uncapitalize $(PACKAGE)), $(FILES))
+LIB = $(OCamlLibrary $(LIBRARY), $(rootname $(PACK)))
+OCAMLFLAGS += -annot -for-pack $(PACKAGE)
+
+.PHONY: install uninstall clean
+
+.DEFAULT: $(LIB)
+
+install: $(LIB) uninstall
+	$(OCAMLFIND) install $(LIBRARY) $(LIB) $(PACK) META
+
+uninstall:
+	$(OCAMLFIND) remove $(LIBRARY)
+
+clean:
+	rm -f $(LIB) $(PACK) *.annot *.spot *.spit *.o *.opt *.cm* lexer.ml tokens.ml tokens.mli parser.output parser.ml parser.mli

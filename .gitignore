@@ -1,0 +1,17 @@
+.omakedb*
+*.omc
+*.annot
+*.spot
+*.spit
+*.opt
+*.cm*
+*.o
+*.a
+
+# example
+example/pydump
+
+# src
+src/lexer.ml
+src/parser.ml
+src/parser.mli
