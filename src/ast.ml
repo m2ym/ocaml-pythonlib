@@ -264,7 +264,7 @@ and pos_of_expr = function
       -> pos
 
 and pos_of_excepthandler = function
-    | ExceptHandler (_, _, _, pos) -> pos
+  | ExceptHandler (_, _, _, pos) -> pos
 
 let context_of_expr = function
   | Attribute (_, _, ctx, _) -> Some ctx
@@ -274,8 +274,59 @@ let context_of_expr = function
   | Tuple (_, ctx, _)        -> Some ctx
   | _                        -> None
 
+let string_of_boolop = function
+  | And -> "and"
+  | Or  -> "or"
+
+let string_of_operator = function
+  | Add         -> "+"
+  | Sub         -> "-"
+  | Mult        -> "*"
+  | Div         -> "/"
+  | Mod         -> "%"
+  | Pow         -> "**"
+  | LShift      -> "<<"
+  | RShift      -> ">>"
+  | BitOr       -> "|"
+  | BitXor      -> "^"
+  | BitAnd      -> "&"
+  | FloorDiv    -> "//"
+
+let string_of_unaryop = function
+  | Invert -> "~"
+  | Not    -> "not"
+  | UAdd   -> "+"
+  | USub   -> "-"
+
+let string_of_cmpop = function
+  | Eq    -> "=="
+  | NotEq -> "!="
+  | Lt    -> "<"
+  | LtE   -> "<="
+  | Gt    -> ">"
+  | GtE   -> ">="
+  | Is    -> "is"
+  | IsNot -> "is not"
+  | In    -> "in"
+  | NotIn -> "not in"
+
 let string_of_number = function
   | Int (n)      -> string_of_int n
   | LongInt (n)  -> (string_of_int n) ^ "L"
   | Float (n)    -> (string_of_float n)
   | Imag (n)     -> n
+
+module Mod = struct
+  type t = modl
+end
+
+module Stmt = struct
+  type t = stmt
+  let pos = pos_of_stmt
+end
+
+module Expr = struct
+  type t = expr
+  let pos = pos_of_expr
+  let context = context_of_expr
+end

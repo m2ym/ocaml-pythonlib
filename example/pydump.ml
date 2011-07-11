@@ -1,3 +1,4 @@
+open Lang_python
+
 let () =
-  let modl = Lang_python.Parse.parse_from_channel stdin in
-    Lang_python.Dump.dump_mod modl
+  Dump.dump_mod (Parse.parse_from_channel stdin)

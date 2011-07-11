@@ -10,6 +10,7 @@
 
 # example
 example/pydump
+example/pypp
 
 # src
 src/lexer.ml

@@ -11,25 +11,25 @@
     let unescapechar c =
       if !escape then begin
         match c with
-          | '\r' -> ()
-          | '\n' -> escape := false
-          | _ -> begin
+        | '\r' -> ()
+        | '\n' -> escape := false
+        | _ -> begin
             escape := false;
             (* TODO http://docs.python.org/reference/lexical_analysis.html#string-literals *)
             Buffer.add_char
               buf
               (match c with
-                | '\\' -> '\\'
-                | '\'' -> '\''
-                | '"' -> '"'
-                | 'a' -> Char.chr 7
-                | 'b' -> '\b'
-                | 'f' -> Char.chr 12
-                | 'n' -> '\n'
-                | 'r' -> '\r'
-                | 't' -> '\t'
-                | 'v' -> Char.chr 11
-                | _ -> (Buffer.add_char buf '\\'; c))
+               | '\\' -> '\\'
+               | '\'' -> '\''
+               | '"' -> '"'
+               | 'a' -> Char.chr 7
+               | 'b' -> '\b'
+               | 'f' -> Char.chr 12
+               | 'n' -> '\n'
+               | 'r' -> '\r'
+               | 't' -> '\t'
+               | 'v' -> Char.chr 11
+               | _ -> (Buffer.add_char buf '\\'; c))
           end
       end else if c = '\\' then
         escape := true
