@@ -11,6 +11,7 @@
 # example
 example/pydump
 example/pypp
+example/pysimplify
 
 # src
 src/lexer.ml
