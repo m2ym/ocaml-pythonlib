@@ -73,7 +73,7 @@ and pp_print_stmt fmt = function
       pp_print_expr fmt value
 
   | Delete (targets, _) ->
-      pp_symbol fmt "delete";
+      pp_symbol fmt "del";
       pp_print_expr_list ~paren:false fmt targets
 
   | Assign (targets, value, _) ->
@@ -124,7 +124,7 @@ and pp_print_stmt fmt = function
       pp_print_expr fmt test;
       pp_colon fmt;
       pp_print_suite fmt body;
-      pp_print_orelse fmt orelse
+      pp_print_if_orelse fmt orelse
 
   | With (context_expr, optional_vars, body, _) ->
       pp_symbol fmt "with";
@@ -172,6 +172,7 @@ and pp_print_stmt fmt = function
       pp_string fmt "try";
       pp_colon fmt;
       pp_print_suite fmt body;
+      pp_newline fmt;
       pp_string fmt "finally";
       pp_colon fmt;
       pp_print_suite fmt finalbody
@@ -240,19 +241,31 @@ and pp_print_suite fmt body =
   pp_print_body fmt body;
   pp_close fmt
 
-and pp_print_orelse fmt orelse =
-  if orelse <> [] then begin
+and pp_print_orelse fmt = function
+  | [] -> ()
+  | orelse ->
     pp_newline fmt;
     pp_string fmt "else";
     pp_colon fmt;
     pp_print_suite fmt orelse
-  end
+
+and pp_print_if_orelse fmt = function
+  | [] -> ()
+  | [If (test, body, orelse, _)] ->
+      pp_newline fmt;
+      pp_symbol fmt "elif";
+      pp_print_expr fmt test;
+      pp_colon fmt;
+      pp_print_suite fmt body;
+      pp_print_if_orelse fmt orelse
+  | orelse ->
+      pp_print_orelse fmt orelse
 
 and pp_print_expr fmt = function
   | BoolOp (op, values, _) ->
       pp_print_expr_list
         ~paren:true
-        ~delim:(string_of_boolop op)
+        ~delim:(" " ^ string_of_boolop op ^ " ")
         fmt values
 
   | BinOp (left, op, right, _) ->
@@ -273,7 +286,7 @@ and pp_print_expr fmt = function
 
   | Lambda (args, body, _) ->
       pp_symbol fmt "lambda";
-      pp_print_arguments fmt args;
+      pp_print_arguments ~paren:false fmt args;
       pp_colon fmt;
       pp_char fmt ' ';
       pp_print_expr fmt body
@@ -312,8 +325,12 @@ and pp_print_expr fmt = function
       pp_char fmt ']'
 
   | GeneratorExp (elt, generators, _) ->
+      pp_char fmt '(';
+      pp_open fmt;
       pp_print_expr fmt elt;
-      pp_print_comprehension_list fmt generators
+      pp_print_comprehension_list fmt generators;
+      pp_close fmt;
+      pp_char fmt ')'
 
   | Yield (None, _) ->
       pp_string fmt "yield"
@@ -349,7 +366,7 @@ and pp_print_expr fmt = function
           (fun (arg, value) ->
              comma fmt;
              pp_string fmt arg;
-             pp_string fmt " = ";
+             pp_char fmt '=';
              pp_print_expr fmt value)
           keywords;
         (match starargs with
@@ -467,6 +484,7 @@ and pp_print_comprehension_list fmt comprehension_list =
 
 and pp_print_excepthandler fmt = function
   | ExceptHandler (typ, name, body, _) ->
+      pp_newline fmt;
       pp_string fmt "except";
       (match typ with
        | None -> ()
@@ -484,7 +502,7 @@ and pp_print_excepthandler fmt = function
 and pp_print_excepthandler_list fmt excepthandler_list =
   List.iter (pp_print_excepthandler fmt) excepthandler_list
 
-and pp_print_arguments fmt (args, varargs, kwargs, defaults) =
+and pp_print_arguments ?(paren=true) fmt (args, varargs, kwargs, defaults) =
   let arg_len = List.length args in
   let def_len = List.length defaults in
   let args, keywords = List.partition_at (arg_len - def_len) args in
@@ -494,7 +512,8 @@ and pp_print_arguments fmt (args, varargs, kwargs, defaults) =
         pp_string fmt !delim;
         delim := ", "
   in
-    pp_char fmt '(';
+    if paren then
+      pp_char fmt '(';
     List.iter
       (fun arg ->
          comma fmt;
@@ -504,7 +523,7 @@ and pp_print_arguments fmt (args, varargs, kwargs, defaults) =
       (fun keyword def ->
          comma fmt;
          pp_print_expr fmt keyword;
-         pp_string fmt " = ";
+         pp_char fmt '=';
          pp_print_expr fmt def)
       keywords defaults;
     (match varargs with
@@ -519,7 +538,8 @@ and pp_print_arguments fmt (args, varargs, kwargs, defaults) =
          comma fmt;
          pp_string fmt "**";
          pp_string fmt kwargs);
-    pp_char fmt ')'
+    if paren then
+      pp_char fmt ')'
 
 and pp_print_alias fmt = function
   | (name, None) ->
@@ -530,7 +550,7 @@ and pp_print_alias fmt = function
       pp_symbol fmt asname
 
 and pp_print_alias_list fmt alias_list =
-  List.iter (pp_print_alias fmt) alias_list
+  pp_separated fmt (pp_print_alias fmt) alias_list
 
 let print_mod = pp_print_mod std_formatter
 let print_stmt = pp_print_stmt std_formatter
