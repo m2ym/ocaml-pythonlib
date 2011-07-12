@@ -341,22 +341,24 @@ and pp_dump_int fmt i = pp_string fmt (string_of_int i)
 and pp_dump_str fmt s =
   if String.contains s '\'' && not (String.contains s '"') then begin
     pp_char fmt '"';
-    String.iter (function
-                   | '\r' -> pp_string fmt "\\r"
-                   | '\n' -> pp_string fmt "\\n"
-                   | '\\' -> pp_string fmt "\\\\"
-                   | '"' -> pp_string fmt "\\\""
-                   | c -> pp_char fmt c)
+    String.iter
+      (function
+       | '\r' -> pp_string fmt "\\r"
+       | '\n' -> pp_string fmt "\\n"
+       | '\\' -> pp_string fmt "\\\\"
+       | '"' -> pp_string fmt "\\\""
+       | c -> pp_char fmt c)
       s;
     pp_char fmt '"'
   end else begin
     pp_char fmt '\'';
-    String.iter (function
-                   | '\r' -> pp_string fmt "\\r"
-                   | '\n' -> pp_string fmt "\\n"
-                   | '\\' -> pp_string fmt "\\\\"
-                   | '\'' -> pp_string fmt "\\'"
-                   | c -> pp_char fmt c)
+    String.iter
+      (function
+       | '\r' -> pp_string fmt "\\r"
+       | '\n' -> pp_string fmt "\\n"
+       | '\\' -> pp_string fmt "\\\\"
+       | '\'' -> pp_string fmt "\\'"
+       | c -> pp_char fmt c)
       s;
     pp_char fmt '\''
   end

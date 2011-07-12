@@ -1,12 +1,6 @@
 module List = struct
   include List
 
-  let mapi f list =
-    let rec loop n = function
-      | [] -> []
-      | x :: xs -> f n x :: loop (n + 1) xs
-    in loop 0 list
-
   let partition_at i list =
     let rec loop i list =
       match i, list with
