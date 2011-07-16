@@ -1,7 +1,6 @@
 PACKAGE = Lang_python
 LIBRARY = lang_python
 USE_OCAMLFIND = true
-#MENHIR_ENABLED = true
 
 FILES[] = utils ast lexer lexer_state parser parse pretty dump
 PACK = $(OCamlPackage $(uncapitalize $(PACKAGE)), $(FILES))
@@ -12,6 +11,14 @@ OCAMLFLAGS += -annot -for-pack $(PACKAGE)
 
 .DEFAULT: $(LIB)
 
+parser.mli: parser.ml
+	$(OCAMLC) -i $< > $@
+
+parser.ml: parser.mly
+	$(OCAMLYACC) -bgen_parser $(OCAMLYACCFLAGS) $<
+	mv gen_parser.ml $@
+	rm gen_parser.mli
+
 install: $(LIB) uninstall
 	$(OCAMLFIND) install $(LIBRARY) $(LIB) $(PACK) META
 
@@ -19,4 +26,4 @@ uninstall:
 	$(OCAMLFIND) remove $(LIBRARY)
 
 clean:
-	rm -f $(LIB) $(PACK) *.annot *.spot *.spit *.o *.opt *.cm* lexer.ml tokens.ml tokens.mli parser.output parser.ml parser.mli
+	rm -f $(LIB) $(PACK) *.annot *.spot *.spit *.o *.opt *.cm* lexer.ml parser.ml

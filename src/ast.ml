@@ -3,81 +3,77 @@
  *   http://docs.python.org/library/ast.html#abstract-grammar
  *)
 
-type pos = Lexing.position
-
-let dummy_pos = Lexing.dummy_pos
-
 type identifier = string
 
-and modl =
-  | Module of stmt list (* body *)
-  | Interactive of stmt list (* body *)
-  | Expression of expr (* body *)
+and 'a modl =
+  | Module of 'a stmt list (* body *)
+  | Interactive of 'a stmt list (* body *)
+  | Expression of 'a expr (* body *)
 
-  | Suite of stmt list (* body *)
+  | Suite of 'a stmt list (* body *)
 
-and stmt =
-  | FunctionDef of identifier (* name *) * arguments (* args *) * stmt list (* body *) * expr list (* decorator_list *) * pos
-  | ClassDef of identifier (* name *) * expr list (* bases *) * stmt list (* body *) * expr list (* decorator_list *) * pos
-  | Return of expr option (* value *) * pos
+and 'a stmt =
+  | FunctionDef of identifier (* name *) * 'a arguments (* args *) * 'a stmt list (* body *) * 'a expr list (* decorator_list *) * 'a
+  | ClassDef of identifier (* name *) * 'a expr list (* bases *) * 'a stmt list (* body *) * 'a expr list (* decorator_list *) * 'a
+  | Return of 'a expr option (* value *) * 'a
 
-  | Delete of expr list (* targets *) * pos
-  | Assign of expr list (* targets *) * expr (* value *) * pos
-  | AugAssign of expr (* target *) * operator (* op *) * expr (* value *) * pos
+  | Delete of 'a expr list (* targets *) * 'a
+  | Assign of 'a expr list (* targets *) * 'a expr (* value *) * 'a
+  | AugAssign of 'a expr (* target *) * operator (* op *) * 'a expr (* value *) * 'a
 
-  | Print of expr option (* dest *) * expr list (* values *) * bool (* nl *) * pos
+  | Print of 'a expr option (* dest *) * 'a expr list (* values *) * bool (* nl *) * 'a
 
-  | For of expr (* target *) * expr (* iter *) * stmt list (* body *) * stmt list (* orelse *) * pos
-  | While of expr (* test *) * stmt list (* body *) * stmt list (* orelse *) * pos
-  | If of expr (* test *) * stmt list (* body *) * stmt list (* orelse *) * pos
-  | With of expr (* context_expr *) * expr option (* optional_vars *) * stmt list (* body *) * pos
+  | For of 'a expr (* target *) * 'a expr (* iter *) * 'a stmt list (* body *) * 'a stmt list (* orelse *) * 'a
+  | While of 'a expr (* test *) * 'a stmt list (* body *) * 'a stmt list (* orelse *) * 'a
+  | If of 'a expr (* test *) * 'a stmt list (* body *) * 'a stmt list (* orelse *) * 'a
+  | With of 'a expr (* context_expr *) * 'a expr option (* optional_vars *) * 'a stmt list (* body *) * 'a
 
-  | Raise of expr option (* type *) * expr option (* inst *) * expr option (* tback *) * pos
-  | TryExcept of stmt list (* body *) * excepthandler list (* handlers *) * stmt list (* orelse *) * pos
-  | TryFinally of stmt list (* body *) * stmt list (* finalbody *) * pos
-  | Assert of expr (* test *) * expr option (* msg *) * pos
+  | Raise of 'a expr option (* type *) * 'a expr option (* inst *) * 'a expr option (* tback *) * 'a
+  | TryExcept of 'a stmt list (* body *) * 'a excepthandler list (* handlers *) * 'a stmt list (* orelse *) * 'a
+  | TryFinally of 'a stmt list (* body *) * 'a stmt list (* finalbody *) * 'a
+  | Assert of 'a expr (* test *) * 'a expr option (* msg *) * 'a
 
-  | Import of alias list (* names *) * pos
-  | ImportFrom of identifier (* module *) * alias list (* names *) * int option (* level *) * pos
+  | Import of alias list (* names *) * 'a
+  | ImportFrom of identifier (* module *) * alias list (* names *) * int option (* level *) * 'a
 
-  | Exec of expr (* body *) * expr option (* globals *) * expr option (* locals *) * pos
+  | Exec of 'a expr (* body *) * 'a expr option (* globals *) * 'a expr option (* locals *) * 'a
 
-  | Global of identifier list (* names *) * pos
-  | Expr of expr (* value *) * pos
-  | Pass of pos
-  | Break of pos
-  | Continue of pos
+  | Global of identifier list (* names *) * 'a
+  | Expr of 'a expr (* value *) * 'a
+  | Pass of 'a
+  | Break of 'a
+  | Continue of 'a
 
-and expr =
-  | BoolOp of boolop (* op *) * expr list (* values *) * pos
-  | BinOp of expr (* left *) * operator (* op *) * expr (* right *) * pos
-  | UnaryOp of unaryop (* op *) * expr (* operand *) * pos
-  | Lambda of arguments (* args *) * expr (* body *) * pos
-  | IfExp of expr (* test *) * expr (* body *) * expr (* orelse *) * pos
-  | Dict of expr list (* keys *) * expr list (* values *) * pos
-  | ListComp of expr (* elt *) * comprehension list (* generators *) * pos
-  | GeneratorExp of expr (* elt *) * comprehension list (* generators *) * pos
-  | Yield of expr option (* value *) * pos
-  | Compare of expr (* left *) * cmpop list (* ops *) * expr list (* comparators *) * pos
-  | Call of expr (* func *) * expr list (* args *) * keyword list (* keywords *) * expr option (* starargs *) * expr option (* kwargs *) * pos
-  | Repr of expr (* value *) * pos
-  | Num of number (* n *) * pos
-  | Str of string (* s *) * pos
+and 'a expr =
+  | BoolOp of boolop (* op *) * 'a expr list (* values *) * 'a
+  | BinOp of 'a expr (* left *) * operator (* op *) * 'a expr (* right *) * 'a
+  | UnaryOp of unaryop (* op *) * 'a expr (* operand *) * 'a
+  | Lambda of 'a arguments (* args *) * 'a expr (* body *) * 'a
+  | IfExp of 'a expr (* test *) * 'a expr (* body *) * 'a expr (* orelse *) * 'a
+  | Dict of 'a expr list (* keys *) * 'a expr list (* values *) * 'a
+  | ListComp of 'a expr (* elt *) * 'a comprehension list (* generators *) * 'a
+  | GeneratorExp of 'a expr (* elt *) * 'a comprehension list (* generators *) * 'a
+  | Yield of 'a expr option (* value *) * 'a
+  | Compare of 'a expr (* left *) * cmpop list (* ops *) * 'a expr list (* comparators *) * 'a
+  | Call of 'a expr (* func *) * 'a expr list (* args *) * 'a keyword list (* keywords *) * 'a expr option (* starargs *) * 'a expr option (* kwargs *) * 'a
+  | Repr of 'a expr (* value *) * 'a
+  | Num of number (* n *) * 'a
+  | Str of string (* s *) * 'a
 
-  | Attribute of expr (* value *) * identifier (* attr *) * expr_context (* ctx *) * pos
-  | Subscript of expr (* value *) * slice (* slice *) * expr_context (* ctx *) * pos
-  | Name of identifier (* id *) * expr_context (* ctx *) * pos
-  | List of expr list (* elts *) * expr_context (* ctx *) * pos
-  | Tuple of expr list (* elts *) * expr_context (* ctx *) * pos
+  | Attribute of 'a expr (* value *) * identifier (* attr *) * expr_context (* ctx *) * 'a
+  | Subscript of 'a expr (* value *) * 'a slice (* slice *) * expr_context (* ctx *) * 'a
+  | Name of identifier (* id *) * expr_context (* ctx *) * 'a
+  | List of 'a expr list (* elts *) * expr_context (* ctx *) * 'a
+  | Tuple of 'a expr list (* elts *) * expr_context (* ctx *) * 'a
 
 (* AugLoad and AugStore are not used *)
 and expr_context = Load | Store | Del | AugLoad | AugStore | Param
 
-and slice =
+and 'a slice =
   | Ellipsis
-  | Slice of expr option (* lower *) * expr option (* upper *) * expr option (* step *)
-  | ExtSlice of slice list (* dims *)
-  | Index of expr (* value *)
+  | Slice of 'a expr option (* lower *) * 'a expr option (* upper *) * 'a expr option (* step *)
+  | ExtSlice of 'a slice list (* dims *)
+  | Index of 'a expr (* value *)
 
 and boolop = And | Or
 
@@ -88,13 +84,13 @@ and unaryop = Invert | Not | UAdd | USub
 
 and cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
 
-and comprehension = expr (* target *) * expr (* iter *) * expr list (* ifs *)
+and 'a comprehension = 'a expr (* target *) * 'a expr (* iter *) * 'a expr list (* ifs *)
 
-and excepthandler = ExceptHandler of expr option (* type *) * expr option (* name *) * stmt list (* body *) * pos
+and 'a excepthandler = ExceptHandler of 'a expr option (* type *) * 'a expr option (* name *) * 'a stmt list (* body *) * 'a
 
-and arguments = expr list (* args *) * identifier option (* varargs *) * identifier option (* kwargs *) * expr list (* defaults *)
+and 'a arguments = 'a expr list (* args *) * identifier option (* varargs *) * identifier option (* kwargs *) * 'a expr list (* defaults *)
 
-and keyword = identifier (* arg *) * expr (* value *)
+and 'a keyword = identifier (* arg *) * 'a expr (* value *)
 
 and alias = identifier (* name *) * identifier option (* asname *)
 
@@ -215,56 +211,56 @@ and name_of_number = function
   | Float _     -> "Float"
   | Imag _      -> "Imag"
 
-let pos_of_stmt = function
-  | FunctionDef (_, _, _, _, pos)
-  | ClassDef (_, _, _, _, pos)
-  | Return (_, pos)
-  | Delete (_, pos)
-  | Assign (_, _, pos)
-  | AugAssign (_, _, _, pos)
-  | Print (_, _, _, pos)
-  | For (_, _, _, _, pos)
-  | While (_, _, _, pos)
-  | If (_, _, _, pos)
-  | With (_, _, _, pos)
-  | Raise (_, _, _, pos)
-  | TryExcept (_, _, _, pos)
-  | TryFinally (_, _, pos)
-  | Assert (_, _, pos)
-  | Import (_, pos)
-  | ImportFrom (_, _, _, pos)
-  | Exec (_, _, _, pos)
-  | Global (_, pos)
-  | Expr (_, pos)
-  | Pass (pos)
-  | Break (pos)
-  | Continue (pos)
-    -> pos
+let annot_of_stmt = function
+  | FunctionDef (_, _, _, _, a)
+  | ClassDef (_, _, _, _, a)
+  | Return (_, a)
+  | Delete (_, a)
+  | Assign (_, _, a)
+  | AugAssign (_, _, _, a)
+  | Print (_, _, _, a)
+  | For (_, _, _, _, a)
+  | While (_, _, _, a)
+  | If (_, _, _, a)
+  | With (_, _, _, a)
+  | Raise (_, _, _, a)
+  | TryExcept (_, _, _, a)
+  | TryFinally (_, _, a)
+  | Assert (_, _, a)
+  | Import (_, a)
+  | ImportFrom (_, _, _, a)
+  | Exec (_, _, _, a)
+  | Global (_, a)
+  | Expr (_, a)
+  | Pass (a)
+  | Break (a)
+  | Continue (a)
+    -> a
 
-and pos_of_expr = function
-  | BoolOp (_, _, pos)
-  | BinOp (_, _, _, pos)
-  | UnaryOp (_, _, pos)
-  | Lambda (_, _, pos)
-  | IfExp (_, _, _, pos)
-  | Dict (_, _, pos)
-  | ListComp (_, _, pos)
-  | GeneratorExp (_, _, pos)
-  | Yield (_, pos)
-  | Compare (_, _, _, pos)
-  | Call (_, _, _, _, _, pos)
-  | Repr (_, pos)
-  | Num (_, pos)
-  | Str (_, pos)
-  | Attribute (_, _, _, pos)
-  | Subscript (_, _, _, pos)
-  | Name (_, _, pos)
-  | List (_, _, pos)
-  | Tuple (_, _, pos)
-      -> pos
+and annot_of_expr = function
+  | BoolOp (_, _, a)
+  | BinOp (_, _, _, a)
+  | UnaryOp (_, _, a)
+  | Lambda (_, _, a)
+  | IfExp (_, _, _, a)
+  | Dict (_, _, a)
+  | ListComp (_, _, a)
+  | GeneratorExp (_, _, a)
+  | Yield (_, a)
+  | Compare (_, _, _, a)
+  | Call (_, _, _, _, _, a)
+  | Repr (_, a)
+  | Num (_, a)
+  | Str (_, a)
+  | Attribute (_, _, _, a)
+  | Subscript (_, _, _, a)
+  | Name (_, _, a)
+  | List (_, _, a)
+  | Tuple (_, _, a)
+    -> a
 
-and pos_of_excepthandler = function
-  | ExceptHandler (_, _, _, pos) -> pos
+and annot_of_excepthandler = function
+  | ExceptHandler (_, _, _, a) -> a
 
 let context_of_expr = function
   | Attribute (_, _, ctx, _) -> Some ctx
@@ -316,17 +312,12 @@ let string_of_number = function
   | Float (n)    -> (string_of_float n)
   | Imag (n)     -> n
 
-module Mod = struct
-  type t = modl
+module type Annot = sig
+  type t
+  val of_pos : Lexing.position -> t
 end
 
-module Stmt = struct
-  type t = stmt
-  let pos = pos_of_stmt
-end
-
-module Expr = struct
-  type t = expr
-  let pos = pos_of_expr
-  let context = context_of_expr
+module Pos : Annot = struct
+  type t = Lexing.position
+  let of_pos pos = pos
 end

@@ -19,7 +19,7 @@ let pp_empty fmt _ = ()
 
 let pp_paren pp fmt = fprintf fmt "(%a)" pp
 
-let pp_some pp fmt = function
+let pp_opt pp fmt = function
   | None -> ()
   | Some x -> pp fmt x
 
@@ -275,8 +275,8 @@ and pp_expr fmt = function
           (fun (arg, value) ->
              fprintf fmt "%t%s=%a" comma arg pp_expr value)
           keywords;
-        pp_some (fun fmt -> fprintf fmt "%t*%a" comma pp_expr) fmt starargs;
-        pp_some (fun fmt -> fprintf fmt "%t**%a" comma pp_expr) fmt kwargs;
+        pp_opt (fun fmt -> fprintf fmt "%t*%a" comma pp_expr) fmt starargs;
+        pp_opt (fun fmt -> fprintf fmt "%t**%a" comma pp_expr) fmt kwargs;
         pp_char fmt ')'
 
   | Repr (value, _) ->
@@ -318,10 +318,10 @@ and pp_slice fmt = function
   | Ellipsis ->
       pp_string fmt "..."
   | Slice (lower, upper, step) ->
-      pp_some pp_expr fmt lower;
+      pp_opt pp_expr fmt lower;
       pp_char fmt ':';
-      pp_some pp_expr fmt upper;
-      pp_some (fun fmt -> fprintf fmt ":%a" pp_expr) fmt step
+      pp_opt pp_expr fmt upper;
+      pp_opt (fun fmt -> fprintf fmt ":%a" pp_expr) fmt step
   | ExtSlice dims ->
       pp_list pp_slice fmt dims
   | Index expr ->
@@ -358,8 +358,8 @@ and pp_args fmt (args, varargs, kwargs, defaults) =
            pp_expr key
            pp_expr def)
       keywords defaults;
-    pp_some (fun fmt -> fprintf fmt "%t*%s" comma) fmt varargs;
-    pp_some (fun fmt -> fprintf fmt "%t**%s" comma) fmt kwargs;
+    pp_opt (fun fmt -> fprintf fmt "%t*%s" comma) fmt varargs;
+    pp_opt (fun fmt -> fprintf fmt "%t**%s" comma) fmt kwargs;
     fprintf fmt "@]"
 
 and pp_alias fmt = function
@@ -370,9 +370,9 @@ and pp_alias fmt = function
 
 and pp_alias_list fmt = pp_list pp_alias fmt
 
-let pp_print_mod = pp_mod
-let pp_print_stmt = pp_stmt
-let pp_print_expr = pp_expr
-let print_mod = pp_print_mod std_formatter
-let print_stmt = pp_print_stmt std_formatter
-let print_expr = pp_print_expr std_formatter
+let pp_print_mod fmt modl = pp_mod fmt modl
+let pp_print_stmt fmt stmt = pp_stmt fmt stmt
+let pp_print_expr fmt expr = pp_expr fmt expr
+let print_mod modl = pp_print_mod std_formatter modl
+let print_stmt stmt = pp_print_stmt std_formatter stmt
+let print_expr expr = pp_print_expr std_formatter expr

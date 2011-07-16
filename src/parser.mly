@@ -1,41 +1,44 @@
 %{
-  open Ast
+  module Make (A : Ast.Annot) = struct
+    open Ast
 
-  type ('a,'b) either = Left of 'a | Right of 'b
+    let annot = A.of_pos
 
-  let singleton e = Left e
-  and tuple e = Right [e]
-  and cons e = function
-    | Left e' -> Right (e::[e'])
-    | Right l -> Right (e::l)
-  and tuple_expr = function
-    | Left e -> e
-    | Right l -> Tuple (l, Load, dummy_pos)
-  and to_list = function
-    | Left e -> [e]
-    | Right l -> l
+    type ('a,'b) either = Left of 'a | Right of 'b
 
-  let rec set_expr_ctx ctx = function
-    | Attribute (value, attr, _, pos) ->
-        Attribute (value, attr, ctx, pos)
-    | Subscript (value, slice, _, pos) ->
-        Subscript (value, slice, ctx, pos)
-     | Name (id, _, pos) ->
-         Name (id, ctx, pos)
-     | List (elts, _, pos) ->
-         List (List.map (set_expr_ctx ctx) elts, ctx, pos)
-     | Tuple (elts, _, pos) ->
-         Tuple (List.map (set_expr_ctx ctx) elts, ctx, pos)
-     | e -> e
+    let singleton e = Left e
+    and tuple e = Right [e]
+    and cons e = function
+      | Left e' -> Right (e::[e'])
+      | Right l -> Right (e::l)
+    and tuple_expr = function
+      | Left e -> e
+      | Right l -> Tuple (l, Load, annot Lexing.dummy_pos)
+    and to_list = function
+      | Left e -> [e]
+      | Right l -> l
 
-  let expr_store = set_expr_ctx Store
-  and expr_del = set_expr_ctx Del
+    let rec set_expr_ctx ctx = function
+      | Attribute (value, attr, _, a) ->
+          Attribute (value, attr, ctx, a)
+      | Subscript (value, slice, _, a) ->
+          Subscript (value, slice, ctx, a)
+      | Name (id, _, a) ->
+          Name (id, ctx, a)
+      | List (elts, _, a) ->
+          List (List.map (set_expr_ctx ctx) elts, ctx, a)
+      | Tuple (elts, _, a) ->
+          Tuple (List.map (set_expr_ctx ctx) elts, ctx, a)
+      | e -> e
 
-  let tuple_expr_store l =
-    let e = tuple_expr l in
-      match context_of_expr e with
-      | Some Param -> e
-      | _ -> expr_store e
+    let expr_store = set_expr_ctx Store
+    and expr_del = set_expr_ctx Del
+
+    let tuple_expr_store l =
+      let e = tuple_expr l in
+        match context_of_expr e with
+        | Some Param -> e
+        | _ -> expr_store e
 %}
 
 /* literals */
@@ -137,10 +140,10 @@
 %token ENDMARKER
 
 %start file_input
-%type <Ast.modl> file_input
+%type <A.t modl> file_input
 
 %start expr
-%type <Ast.expr> expr
+%type <A.t expr> expr
 
 %%
 
@@ -153,15 +156,15 @@ decorator:
 
 decorator_name:
   | atom_name { $1 }
-  | atom_name DOT NAME { Attribute ($1, fst $3, Load, snd $3) }
+  | atom_name DOT NAME { Attribute ($1, fst $3, Load, annot (snd $3)) }
 
 decorator_expr:
   | decorator_name { $1 }
-  | decorator_name LPAREN RPAREN { Call ($1, [], [], None, None, $2) }
+  | decorator_name LPAREN RPAREN { Call ($1, [], [], None, None, annot $2) }
   | decorator_name LPAREN arglist RPAREN
       { match $3 with
         | args, keywords, starargs, kwargs ->
-            Call ($1, args, keywords, starargs, kwargs, $2) }
+            Call ($1, args, keywords, starargs, kwargs, annot $2) }
 
 decorators:
   | { [] }
@@ -169,7 +172,7 @@ decorators:
 
 funcdef:
   | decorators DEF name parameters COLON suite
-      { FunctionDef ($3, $4, $6, $1, $2) }
+      { FunctionDef ($3, $4, $6, $1, annot $2) }
 
 parameters:
   | LPAREN varargslist RPAREN { $2 }
@@ -194,7 +197,7 @@ varargslist:
       { [], fst $1, snd $1, [] }
 
 fpdef:
-  | NAME { Name (fst $1, Param, snd $1) }
+  | NAME { Name (fst $1, Param, annot (snd $1)) }
   | LPAREN fplist RPAREN { tuple_expr_store $2 }
 
 fplist:
@@ -240,9 +243,9 @@ small_stmt:
   | assert_stmt { $1 }
 
 expr_stmt:
-  | expr_stmt_lhs EQ expr_stmt_rhs_list { Assign ($1::(fst $3), snd $3, $2) }
-  | expr_stmt_lhs augassign expr_stmt_rhs { AugAssign ($1, fst $2, $3, snd $2) }
-  | testlist_expr { Expr ($1, pos_of_expr $1) }
+  | expr_stmt_lhs EQ expr_stmt_rhs_list { Assign ($1::(fst $3), snd $3, annot $2) }
+  | expr_stmt_lhs augassign expr_stmt_rhs { AugAssign ($1, fst $2, $3, annot (snd $2)) }
+  | testlist_expr { Expr ($1, annot_of_expr $1) }
       
 expr_stmt_lhs:
   | testlist { tuple_expr_store $1 }
@@ -272,10 +275,10 @@ augassign:
 print_stmt:
   | PRINT
       { (* TODO "from __future__ import print_function" *)
-        Print (None, [], true, $1) }
-  | PRINT test print_testlist { Print (None, $2::(fst $3), snd $3, $1) }
-  | PRINT RSHIFT test { Print (Some $3, [], true, $1) }
-  | PRINT RSHIFT test COMMA test print_testlist { Print (Some $3, $5::(fst $6), snd $6, $1) }
+        Print (None, [], true, annot $1) }
+  | PRINT test print_testlist { Print (None, $2::(fst $3), snd $3, annot $1) }
+  | PRINT RSHIFT test { Print (Some $3, [], true, annot $1) }
+  | PRINT RSHIFT test COMMA test print_testlist { Print (Some $3, $5::(fst $6), snd $6, annot $1) }
 
 print_testlist:
   | { [], true }
@@ -283,10 +286,10 @@ print_testlist:
   | COMMA test print_testlist { $2::(fst $3), snd $3 }
 
 del_stmt:
-  | DEL exprlist { Delete (List.map expr_del (to_list $2), $1) }
+  | DEL exprlist { Delete (List.map expr_del (to_list $2), annot $1) }
 
 pass_stmt:
-  | PASS { Pass ($1) }
+  | PASS { Pass (annot $1) }
 
 flow_stmt:
   | break_stmt    { $1 }
@@ -296,38 +299,38 @@ flow_stmt:
   | yield_stmt    { $1 }
 
 break_stmt:
-  | BREAK { Break $1 }
+  | BREAK { Break (annot $1) }
 
 continue_stmt:
-  | CONTINUE { Continue $1 }
+  | CONTINUE { Continue (annot $1) }
 
 return_stmt:
-  | RETURN { Return (None, $1) }
-  | RETURN testlist { Return (Some (tuple_expr $2), $1) }
+  | RETURN { Return (None, annot $1) }
+  | RETURN testlist { Return (Some (tuple_expr $2), annot $1) }
 
 yield_stmt:
-  | yield_expr { Expr ($1, pos_of_expr $1) }
+  | yield_expr { Expr ($1, annot_of_expr $1) }
 
 raise_stmt:
-  | RAISE { Raise (None, None, None, $1) }
-  | RAISE test { Raise (Some $2, None, None, $1) }
-  | RAISE test COMMA test { Raise (Some $2, Some $4, None, $1) }
-  | RAISE test COMMA test COMMA test { Raise (Some $2, Some $4, Some $6, $1) }
+  | RAISE { Raise (None, None, None, annot $1) }
+  | RAISE test { Raise (Some $2, None, None, annot $1) }
+  | RAISE test COMMA test { Raise (Some $2, Some $4, None, annot $1) }
+  | RAISE test COMMA test COMMA test { Raise (Some $2, Some $4, Some $6, annot $1) }
 
 import_stmt:
   | import_name { $1 }
   | import_from { $1 }
 
 import_name:
-  | IMPORT dotted_as_names { Import ($2, $1) }
+  | IMPORT dotted_as_names { Import ($2, annot $1) }
 
 import_from:
   | FROM name_and_level IMPORT MULT
-      { ImportFrom (fst $2, ["*", None], snd $2, $1) }
+      { ImportFrom (fst $2, ["*", None], snd $2, annot $1) }
   | FROM name_and_level IMPORT LPAREN import_as_names RPAREN
-      { ImportFrom (fst $2, $5, snd $2, $1) }
+      { ImportFrom (fst $2, $5, snd $2, annot $1) }
   | FROM name_and_level IMPORT import_as_names
-      { ImportFrom (fst $2, $4, snd $2, $1) }
+      { ImportFrom (fst $2, $4, snd $2, annot $1) }
 
 name_and_level:
   | dotted_name { $1, Some 0 }
@@ -360,20 +363,20 @@ dotted_name:
   | name DOT dotted_name { $1 ^ "." ^ $3 }
 
 global_stmt:
-  | GLOBAL name_list { Global ($2, $1) }
+  | GLOBAL name_list { Global ($2, annot $1) }
 
 name_list:
   | name { [$1] }
   | name COMMA name_list { $1::$3 }
 
 exec_stmt:
-  | EXEC expr { Exec ($2, None, None, $1) }
-  | EXEC expr IN test { Exec ($2, Some $4, None, $1) }
-  | EXEC expr IN test COMMA test { Exec ($2, Some $4, Some $6, $1) }
+  | EXEC expr { Exec ($2, None, None, annot $1) }
+  | EXEC expr IN test { Exec ($2, Some $4, None, annot $1) }
+  | EXEC expr IN test COMMA test { Exec ($2, Some $4, Some $6, annot $1) }
 
 assert_stmt:
-  | ASSERT test { Assert ($2, None, $1) }
-  | ASSERT test COMMA test { Assert ($2, Some $4, $1) }
+  | ASSERT test { Assert ($2, None, annot $1) }
+  | ASSERT test COMMA test { Assert ($2, Some $4, annot $1) }
 
 compound_stmt:
   | if_stmt     { $1 }
@@ -385,48 +388,48 @@ compound_stmt:
   | classdef    { $1 }
 
 if_stmt:
-  | IF test COLON suite elif_stmt_list { If ($2, $4, $5, $1) }
+  | IF test COLON suite elif_stmt_list { If ($2, $4, $5, annot $1) }
 
 elif_stmt_list:
   | { [] }
-  | ELIF test COLON suite elif_stmt_list { [If ($2, $4, $5, $1)] }
+  | ELIF test COLON suite elif_stmt_list { [If ($2, $4, $5, annot $1)] }
   | ELSE COLON suite { $3 }
 
 while_stmt:
-  | WHILE test COLON suite { While ($2, $4, [], $1) }
-  | WHILE test COLON suite ELSE COLON suite { While ($2, $4, $7, $1) }
+  | WHILE test COLON suite { While ($2, $4, [], annot $1) }
+  | WHILE test COLON suite ELSE COLON suite { While ($2, $4, $7, annot $1) }
 
 for_stmt:
   | FOR exprlist IN testlist COLON suite
-      { For (tuple_expr_store $2, tuple_expr $4, $6, [], $1) }
+      { For (tuple_expr_store $2, tuple_expr $4, $6, [], annot $1) }
   | FOR exprlist IN testlist COLON suite ELSE COLON suite
-      { For (tuple_expr_store $2, tuple_expr $4, $6, $9, $1) }
+      { For (tuple_expr_store $2, tuple_expr $4, $6, $9, annot $1) }
 
 try_stmt:
   | TRY COLON suite excepthandler_list
-      { TryExcept ($3, $4, [], $1) }
+      { TryExcept ($3, $4, [], annot $1) }
   | TRY COLON suite excepthandler_list ELSE COLON suite
-      { TryExcept ($3, $4, $7, $1) }
+      { TryExcept ($3, $4, $7, annot $1) }
   | TRY COLON suite excepthandler_list ELSE COLON suite FINALLY COLON suite
-      { TryFinally ([TryExcept ($3, $4, $7, $1)], $10, $8) }
+      { TryFinally ([TryExcept ($3, $4, $7, annot $1)], $10, annot $8) }
   | TRY COLON suite excepthandler_list FINALLY COLON suite
-      { TryFinally ([TryExcept ($3, $4, [], $1)], $7, $5) }
+      { TryFinally ([TryExcept ($3, $4, [], annot $1)], $7, annot $5) }
   | TRY COLON suite FINALLY COLON suite
-      { TryFinally ($3, $6, $1) }
+      { TryFinally ($3, $6, annot $1) }
 
 excepthandler:
-  | EXCEPT COLON suite { ExceptHandler (None, None, $3, $1) }
-  | EXCEPT test COLON suite { ExceptHandler (Some $2, None, $4, $1) }
-  | EXCEPT test AS test COLON suite { ExceptHandler (Some $2, Some $4, $6, $1) }
-  | EXCEPT test COMMA test COLON suite { ExceptHandler (Some $2, Some (expr_store $4), $6, $1) }
+  | EXCEPT COLON suite { ExceptHandler (None, None, $3, annot $1) }
+  | EXCEPT test COLON suite { ExceptHandler (Some $2, None, $4, annot $1) }
+  | EXCEPT test AS test COLON suite { ExceptHandler (Some $2, Some $4, $6, annot $1) }
+  | EXCEPT test COMMA test COLON suite { ExceptHandler (Some $2, Some (expr_store $4), $6, annot $1) }
 
 excepthandler_list:
   | excepthandler { [$1] }
   | excepthandler excepthandler_list { $1::$2 }
 
 with_stmt:
-  | WITH test COLON suite { With ($2, None, $4, $1) }
-  | WITH test AS expr COLON suite { With ($2, Some $4, $6, $1) }
+  | WITH test COLON suite { With ($2, None, $4, annot $1) }
+  | WITH test AS expr COLON suite { With ($2, Some $4, $6, annot $1) }
 
 suite:
   | simple_stmt { $1 }
@@ -442,11 +445,11 @@ old_test:
   | old_lambdadef { $1 }
 
 old_lambdadef:
-  | LAMBDA varargslist COLON old_test { Lambda ($2, $4, $1) }
+  | LAMBDA varargslist COLON old_test { Lambda ($2, $4, annot $1) }
 
 test:
   | or_test { $1 }
-  | or_test IF or_test ELSE test { IfExp ($3, $1, $5, $2) }
+  | or_test IF or_test ELSE test { IfExp ($3, $1, $5, annot $2) }
   | lambdadef { $1 }
 
 test_opt:
@@ -455,18 +458,18 @@ test_opt:
 
 or_test:
   | and_test { $1 }
-  | and_test OR and_test_list { BoolOp (Or, $1::$3, $2) }
+  | and_test OR and_test_list { BoolOp (Or, $1::$3, annot $2) }
 
 and_test:
   | not_test { $1 }
-  | not_test AND not_test_list { BoolOp (And, $1::$3, $2) }
+  | not_test AND not_test_list { BoolOp (And, $1::$3, annot $2) }
 
 and_test_list:
   | and_test { [$1] }
   | and_test OR and_test_list { $1::$3 }
 
 not_test:
-  | NOT not_test { UnaryOp (Not, $2, $1) }
+  | NOT not_test { UnaryOp (Not, $2, annot $1) }
   | comparison { $1 }
 
 not_test_list:
@@ -475,7 +478,7 @@ not_test_list:
 
 comparison:
   | expr { $1 }
-  | expr comp_op comparison_list { Compare ($1, (fst $2)::(fst $3), snd $3, snd $2) }
+  | expr comp_op comparison_list { Compare ($1, (fst $2)::(fst $3), snd $3, annot (snd $2)) }
 
 comparison_list:
   | expr { [], [$1] }
@@ -495,29 +498,29 @@ comp_op:
 
 expr:
   | xor_expr { $1 }
-  | expr BITOR xor_expr{ BinOp ($1, BitOr, $3, $2) }
+  | expr BITOR xor_expr{ BinOp ($1, BitOr, $3, annot $2) }
 
 xor_expr:
   | and_expr { $1 }
-  | xor_expr BITXOR and_expr { BinOp ($1, BitXor, $3, $2) }
+  | xor_expr BITXOR and_expr { BinOp ($1, BitXor, $3, annot $2) }
 
 and_expr:
   | shift_expr { $1 }
-  | shift_expr BITAND and_expr { BinOp ($1, BitAnd, $3, $2) }
+  | shift_expr BITAND and_expr { BinOp ($1, BitAnd, $3, annot $2) }
 
 shift_expr:
   | arith_expr { $1 }
-  | shift_expr LSHIFT arith_expr { BinOp ($1, LShift, $3, $2) }
-  | shift_expr RSHIFT arith_expr { BinOp ($1, RShift, $3, $2) }
+  | shift_expr LSHIFT arith_expr { BinOp ($1, LShift, $3, annot $2) }
+  | shift_expr RSHIFT arith_expr { BinOp ($1, RShift, $3, annot $2) }
 
 arith_expr:
   | term { $1 }
-  | arith_expr ADD term { BinOp ($1, Add, $3, $2) }
-  | arith_expr SUB term { BinOp ($1, Sub, $3, $2) }
+  | arith_expr ADD term { BinOp ($1, Add, $3, annot $2) }
+  | arith_expr SUB term { BinOp ($1, Sub, $3, annot $2) }
 
 term:
   | factor { $1 }
-  | factor term_op term { BinOp ($1, fst $2, $3, snd $2) }
+  | factor term_op term { BinOp ($1, fst $2, $3, annot (snd $2)) }
 
 term_op:
   | MULT    { Mult, $1 }
@@ -526,7 +529,7 @@ term_op:
   | FDIV    { FloorDiv, $1 }
 
 factor:
-  | ADD factor { UnaryOp (UAdd, $2, $1) }
+  | ADD factor { UnaryOp (UAdd, $2, annot $1) }
   | SUB factor
       { (* CPython converts
              UnaryOp (op=Sub (), operand=Num (n=x))
@@ -538,27 +541,27 @@ factor:
         | Num (LongInt (n), a)    -> Num (LongInt (-n), a)
         | Num (Float (n), a)      -> Num (Float (-.n), a)
         | Num (Imag (n), a)       -> Num (Imag ("-" ^ n), a)
-        | _                       -> UnaryOp (USub, $2, $1) }
-  | BITNOT factor { UnaryOp (Invert, $2, $1) }
+        | _                       -> UnaryOp (USub, $2, annot $1) }
+  | BITNOT factor { UnaryOp (Invert, $2, annot $1) }
   | power { $1 }
 
 power:
   | atom_trailer { $1 }
-  | atom_trailer POW factor { BinOp ($1, Pow, $3, $2) }
+  | atom_trailer POW factor { BinOp ($1, Pow, $3, annot $2) }
 
 atom_trailer:
   | atom { $1 }
-  | atom_trailer LPAREN RPAREN { Call ($1, [], [], None, None, $2) }
+  | atom_trailer LPAREN RPAREN { Call ($1, [], [], None, None, annot $2) }
   | atom_trailer LPAREN arglist RPAREN
       { match $3 with
         | args, keywords, starargs, kwargs ->
-            Call ($1, args, keywords, starargs, kwargs, $2) }
+            Call ($1, args, keywords, starargs, kwargs, annot $2) }
   | atom_trailer LBRACK subscriptlist RBRACK
       { match $3 with
           (* TODO test* => Index (Tuple (elts)) *)
-        | [s] -> Subscript ($1, s, Load, $2)
-        | l -> Subscript ($1, ExtSlice (l), Load, $2) }
-  | atom_trailer DOT NAME { Attribute ($1, fst $3, Load, snd $3) }
+        | [s] -> Subscript ($1, s, Load, annot $2)
+        | l -> Subscript ($1, ExtSlice (l), Load, annot $2) }
+  | atom_trailer DOT NAME { Attribute ($1, fst $3, Load, annot (snd $3)) }
 
 atom:
   | atom_tuple  { $1 }
@@ -566,32 +569,32 @@ atom:
   | atom_dict   { $1 }
   | atom_repr   { $1 }
   | atom_name   { $1 }
-  | INT         { Num (Int (fst $1), snd $1) }
-  | LONGINT     { Num (LongInt (fst $1), snd $1) }
-  | FLOAT       { Num (Float (fst $1), snd $1) }
-  | IMAG        { Num (Imag (fst $1), snd $1) }
-  | string_list { Str (String.concat "" (fst $1), snd $1) }
+  | INT         { Num (Int (fst $1), annot (snd $1)) }
+  | LONGINT     { Num (LongInt (fst $1), annot (snd $1)) }
+  | FLOAT       { Num (Float (fst $1), annot (snd $1)) }
+  | IMAG        { Num (Imag (fst $1), annot (snd $1)) }
+  | string_list { Str (String.concat "" (fst $1), annot (snd $1)) }
 
 atom_tuple:
-  | LPAREN RPAREN { Tuple ([], Load, $1) }
+  | LPAREN RPAREN { Tuple ([], Load, annot $1) }
   | LPAREN yield_expr RPAREN { $2 }
-  | LPAREN test gen_for RPAREN { GeneratorExp ($2, $3, $1) }
+  | LPAREN test gen_for RPAREN { GeneratorExp ($2, $3, annot $1) }
   | LPAREN testlist RPAREN { tuple_expr $2 }
 
 atom_list:
-  | LBRACK RBRACK { List ([], Load, $1) }
-  | LBRACK test list_for RBRACK { ListComp ($2, $3, $1) }
-  | LBRACK testlist RBRACK { List (to_list $2, Load, $1) }
+  | LBRACK RBRACK { List ([], Load, annot $1) }
+  | LBRACK test list_for RBRACK { ListComp ($2, $3, annot $1) }
+  | LBRACK testlist RBRACK { List (to_list $2, Load, annot $1) }
 
 atom_dict:
-  | LBRACE RBRACE { Dict ([], [], $1) }
-  | LBRACE dictmaker RBRACE { Dict (fst $2, snd $2, $1) }
+  | LBRACE RBRACE { Dict ([], [], annot $1) }
+  | LBRACE dictmaker RBRACE { Dict (fst $2, snd $2, annot $1) }
 
 atom_repr:
-  | BACKQUOTE testlist1 BACKQUOTE { Repr (tuple_expr $2, $1) }
+  | BACKQUOTE testlist1 BACKQUOTE { Repr (tuple_expr $2, annot $1) }
 
 atom_name:
-  | NAME { Name (fst $1, Load, snd $1) }
+  | NAME { Name (fst $1, Load, annot (snd $1)) }
 
 dictmaker:
   | test COLON test { [$1], [$3] }
@@ -603,7 +606,7 @@ string_list:
   | STR string_list { (fst $1::fst $2, snd $1) }
 
 lambdadef:
-  | LAMBDA varargslist COLON test { Lambda ($2, $4, $1) }
+  | LAMBDA varargslist COLON test { Lambda ($2, $4, annot $1) }
 
 subscriptlist:
   | subscript { [$1] }
@@ -630,9 +633,9 @@ testlist_expr:
   | testlist { tuple_expr $1 }
 
 classdef:
-  | decorators CLASS name COLON suite { ClassDef ($3, [], $5, $1, $2) }
-  | decorators CLASS name LPAREN RPAREN COLON suite { ClassDef ($3, [], $7, $1, $2) }
-  | decorators CLASS name LPAREN testlist RPAREN COLON suite { ClassDef ($3, to_list $5, $8, $1, $2) }
+  | decorators CLASS name COLON suite { ClassDef ($3, [], $5, $1, annot $2) }
+  | decorators CLASS name LPAREN RPAREN COLON suite { ClassDef ($3, [], $7, $1, annot $2) }
+  | decorators CLASS name LPAREN testlist RPAREN COLON suite { ClassDef ($3, to_list $5, $8, $1, annot $2) }
 
 arglist:
   | argument { [$1], [], None, None }
@@ -645,7 +648,7 @@ arglist:
 
 argument:
   | test { $1 }
-  | test gen_for { GeneratorExp ($1, $2, pos_of_expr $1) }
+  | test gen_for { GeneratorExp ($1, $2, annot_of_expr $1) }
 
 keyword:
   | test EQ test
@@ -703,8 +706,11 @@ testlist1:
   | test COMMA testlist1 { cons $1 $3 }
 
 yield_expr:
-  | YIELD { Yield (None, $1) }
-  | YIELD testlist_expr { Yield (Some $2, $1) }
+  | YIELD { Yield (None, annot $1) }
+  | YIELD testlist_expr { Yield (Some $2, annot $1) }
 
 name:
   | NAME { fst $1 }
+
+%%
+end
