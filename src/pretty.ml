@@ -38,11 +38,12 @@ let rec pp_block pp fmt = function
         pp x (pp_block pp) xs
 
 let rec pp_mod fmt = function
-  | Module body
-  | Interactive body
-  | Suite body ->
+  | Module (body, _)
+  | Interactive (body, _)
+  | Suite (body, _) ->
       pp_block pp_stmt fmt body
-  | Expression expr ->
+
+  | Expression (expr, _) ->
       pp_expr fmt expr
 
 and pp_stmt fmt = function

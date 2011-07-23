@@ -1,5 +1,7 @@
 PACKAGE = Lang_python
 LIBRARY = lang_python
+
+BYTE_ENABLED = true
 USE_OCAMLFIND = true
 
 FILES[] = utils ast lexer lexer_state parser parse pretty dump

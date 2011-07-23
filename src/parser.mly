@@ -149,7 +149,7 @@
 
 file_input:
   | nl_stmt_list ENDMARKER
-      { Module $1 }
+      { Module ($1, annot Lexing.dummy_pos) }
 
 decorator:
   | AT decorator_expr NEWLINE { $2 }

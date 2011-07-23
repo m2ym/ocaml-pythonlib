@@ -6,11 +6,11 @@
 type identifier = string
 
 and 'a modl =
-  | Module of 'a stmt list (* body *)
-  | Interactive of 'a stmt list (* body *)
-  | Expression of 'a expr (* body *)
+  | Module of 'a stmt list (* body *) * 'a
+  | Interactive of 'a stmt list (* body *) * 'a
+  | Expression of 'a expr (* body *) * 'a
 
-  | Suite of 'a stmt list (* body *)
+  | Suite of 'a stmt list (* body *) * 'a
 
 and 'a stmt =
   | FunctionDef of identifier (* name *) * 'a arguments (* args *) * 'a stmt list (* body *) * 'a expr list (* decorator_list *) * 'a

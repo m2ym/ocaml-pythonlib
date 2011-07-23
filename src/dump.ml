@@ -140,6 +140,19 @@ and pp_node fmt label fields =
   fprintf fmt "%s(%a)"
     label (pp_list ~bracket:false pp_field) fields
 
+and pp_mod fmt = function
+  | Module (body, _) ->
+      pp_node fmt "Module" ["body", `Stmt_list body]
+
+  | Interactive (body, _) ->
+      pp_node fmt "Interactive" ["body", `Stmt_list body]
+
+  | Expression (body, _) ->
+      pp_node fmt "Expression" ["body", `Expr body]
+
+  | Suite (body, _) ->
+      pp_node fmt "Suite" ["body", `Stmt_list body]
+
 and pp_stmt fmt = function
   | FunctionDef (name, args, body, decorator_list, _) ->
       pp_node fmt "FunctionDef"
@@ -147,56 +160,68 @@ and pp_stmt fmt = function
          "args", `Arguments args;
          "body", `Stmt_list body;
          "decorator_list", `Expr_list decorator_list]
+
   | ClassDef (name, bases, body, decorator_list, _) ->
       pp_node fmt "ClassDef"
         ["name", `Identifier name;
          "bases", `Expr_list bases;
          "body", `Stmt_list body;
          "decorator_list", `Expr_list decorator_list]
+
   | Return (value, _) ->
       pp_node fmt "Return" ["value", `Expr_opt value]
+
   | Delete (targets, _) ->
       pp_node fmt "Delete" ["targets", `Expr_list targets]
+
   | Assign (targets, value, _) ->
       pp_node fmt "Assign"
         ["targets", `Expr_list targets;
          "value", `Expr value]
+
   | AugAssign (target, op, value, _) ->
       pp_node fmt "AugAssign"
         ["target", `Expr target;
          "op", `Operator op;
          "value", `Expr value]
+
   | Print (dest, values, nl, _) ->
       pp_node fmt "Print"
         ["dest", `Expr_opt dest;
          "values", `Expr_list values;
          "nl", `Bool nl]
+
   | For (target, iter, body, orelse, _) ->
       pp_node fmt "For"
         ["target", `Expr target;
          "iter", `Expr iter;
          "body", `Stmt_list body;
          "orelse", `Stmt_list orelse]
+
   | While (test, body, orelse, _) ->
       pp_node fmt "While"
         ["test", `Expr test;
          "body", `Stmt_list body;
          "orelse", `Stmt_list orelse]
+
   | If (test, body, orelse, _) ->
       pp_node fmt "If"
         ["test", `Expr test;
          "body", `Stmt_list body;
          "orelse", `Stmt_list orelse]
+
   | With (context_expr, optional_vars, body, _) ->
       pp_node fmt "With"
         ["context_expr", `Expr context_expr;
          "optional_vars", `Expr_opt optional_vars;
          "body", `Stmt_list body]
+
   | Raise (typ, inst, tback, _) ->
       pp_node fmt "Raise"
         ["type", `Expr_opt typ;
          "inst", `Expr_opt inst;
          "tback", `Expr_opt tback]
+
   | TryExcept (body, handlers, orelse, _) ->
       pp_node fmt "TryExcept"
         ["body", `Stmt_list body;
@@ -206,12 +231,15 @@ and pp_stmt fmt = function
       pp_node fmt "TryFinally"
         ["body", `Stmt_list body;
          "finalbody", `Stmt_list finalbody]
+
   | Assert (test, msg, _) ->
       pp_node fmt "Assert"
         ["test", `Expr test;
          "msg", `Expr_opt msg]
+
   | Import (names, _) ->
       pp_node fmt "Import" ["names", `Alias_list names]
+
   | ImportFrom (modul, names, level, _) ->
       (match level with
        | Some l ->
@@ -220,17 +248,23 @@ and pp_stmt fmt = function
               "names", `Alias_list names;
               "level", `Int l]
        | None -> failwith "Unreachable")
+
   | Exec (body, globals, locals, _) ->
       pp_node fmt "Exec"
         ["body", `Expr body;
          "globals", `Expr_opt globals;
          "locals", `Expr_opt locals]
+
   | Global (names, _) ->
       pp_node fmt "Global" ["names", `Identifier_list names]
+
   | Expr (value, _) ->
       pp_node fmt "Expr" ["value", `Expr value]
+
   | Pass (_) -> pp_node fmt "Pass" []
+
   | Break (_) -> pp_node fmt "Break" []
+
   | Continue (_) -> pp_node fmt "Continue" []
 
 and pp_expr fmt = function
@@ -238,43 +272,53 @@ and pp_expr fmt = function
       pp_node fmt "BoolOp"
         ["op", `Boolop op;
          "values", `Expr_list values]
+
   | BinOp (left, op, right, _) ->
       pp_node fmt "BinOp"
         ["left", `Expr left;
          "op", `Operator op;
          "right", `Expr right]
+
   | UnaryOp (op, operand, _) ->
       pp_node fmt "UnaryOp"
         ["op", `Unaryop op;
          "operand", `Expr operand]
+
   | Lambda (args, body, _) ->
       pp_node fmt "Lambda"
         ["args", `Arguments args;
          "body", `Expr body]
+
   | IfExp (test, body, orelse, _) ->
       pp_node fmt "IfExp"
         ["test", `Expr test;
          "body", `Expr body;
          "orelse", `Expr orelse;]
+
   | Dict (keys, values, _) ->
       pp_node fmt "Dict"
         ["keys", `Expr_list keys;
          "values", `Expr_list values]
+
   | ListComp (elt, generators, _) ->
       pp_node fmt "ListComp"
         ["elt", `Expr elt;
          "generators", `Comprehension_list generators]
+
   | GeneratorExp (elt, generators, _) ->
       pp_node fmt "GeneratorExp"
         ["elt", `Expr elt;
          "generators", `Comprehension_list generators]
+
   | Yield (value, _) ->
       pp_node fmt "Yield" ["value", `Expr_opt value]
+
   | Compare (left, ops, comparators, _) ->
       pp_node fmt "Compare"
         ["left", `Expr left;
          "ops", `Cmpop_list ops;
          "comparators", `Expr_list comparators]
+
   | Call (func, args, keywords, starargs, kwargs, _) ->
       pp_node fmt "Call"
         ["func", `Expr func;
@@ -282,44 +326,42 @@ and pp_expr fmt = function
          "keywords", `Keyword_list keywords;
          "starargs", `Expr_opt starargs;
          "kwargs", `Expr_opt kwargs]
+
   | Repr (value, _) ->
       pp_node fmt "Repr" ["value", `Expr value]
+
   | Num (n, _) ->
       pp_node fmt "Num" ["n", `Num n]
+
   | Str (s, _) ->
       pp_node fmt "Str" ["s", `Str s]
+
   | Attribute (value, attr, ctx, _) ->
       pp_node fmt "Attribute"
         ["value", `Expr value;
          "attr", `Identifier attr;
          "ctx", `Expr_context ctx]
+
   | Subscript (value, slice, ctx, _) ->
       pp_node fmt "Subscript"
         ["value", `Expr value;
          "slice", `Slice slice;
          "ctx", `Expr_context ctx]
+
   | Name (id, ctx, _) ->
       pp_node fmt "Name"
         ["id", `Identifier id;
          "ctx", `Expr_context ctx]
+
   | List (elts, ctx, _) ->
       pp_node fmt "List"
         ["elts", `Expr_list elts;
          "ctx", `Expr_context ctx]
+
   | Tuple (elts, ctx, _) ->
       pp_node fmt "Tuple"
         ["elts", `Expr_list elts;
          "ctx", `Expr_context ctx]
-
-and pp_mod fmt = function
-  | Module (body) ->
-      pp_node fmt "Module" ["body", `Stmt_list body]
-  | Interactive (body) ->
-      pp_node fmt "Interactive" ["body", `Stmt_list body]
-  | Expression (body) ->
-      pp_node fmt "Expression" ["body", `Expr body]
-  | Suite (body) ->
-      pp_node fmt "Suite" ["body", `Stmt_list body]
 
 let pp_print_mod fmt modl = pp_mod fmt modl
 let pp_print_stmt fmt stmt = pp_stmt fmt stmt
