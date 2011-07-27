@@ -374,6 +374,7 @@ let print_to_string pp node =
   let buf = Buffer.create 4096 in
   let fmt = formatter_of_buffer buf in
     pp fmt node;
+    pp_print_flush fmt ();
     Buffer.contents buf
 
 let dump_mod modl = print_to_string pp_print_mod modl

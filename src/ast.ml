@@ -211,7 +211,14 @@ and name_of_number = function
   | Float _     -> "Float"
   | Imag _      -> "Imag"
 
-let annot_of_stmt = function
+let annot_of_mod = function
+  | Module (_, a)
+  | Interactive (_, a)
+  | Expression (_, a)
+  | Suite (_, a)
+    -> a
+
+and annot_of_stmt = function
   | FunctionDef (_, _, _, _, a)
   | ClassDef (_, _, _, _, a)
   | Return (_, a)
