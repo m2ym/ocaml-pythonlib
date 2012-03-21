@@ -1,6 +1,7 @@
 LIBRARY = lang_python
 
 BYTE_ENABLED = true
+NATIVE_ENABLED = true
 USE_OCAMLFIND = true
 
 FILES[] = utils ast lexer lexer_state parser parse pretty dump
@@ -12,7 +13,7 @@ OCAMLFLAGS += -annot -for-pack $(capitalize $(LIBRARY))
 
 .DEFAULT: $(LIB)
 
-parser.mli: parser.ml
+parser.mli: parser.ml ast.cmo
 	$(OCAMLC) -i $< > $@
 
 parser.ml: parser.mly
