@@ -1,0 +1,20 @@
+#!/bin/sh -e
+
+prefix=
+for arg in "$@"; do
+    case "$arg" in
+        *.mly) prefix="${arg%.mly}";;
+    esac
+done
+
+ocamlyacc "$@"
+
+# Cut out token definition
+sed -i -e '0,/^$/d' "$prefix.ml" "$prefix.mli"
+
+# Fix mli for parameterizing
+sed -i \
+    -e '1i open Token' \
+    -e '1i module Make : functor (A : Ast.Annot) -> sig' \
+    -e '$a end' \
+    "$prefix.mli"

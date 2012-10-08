@@ -1,4 +1,5 @@
 %{
+  open Token
   module Make (A : Ast.Annot) = struct
     open Ast
 
@@ -140,10 +141,10 @@
 %token ENDMARKER
 
 %start file_input
-%type <A.t modl> file_input
+%type <A.t Ast.modl> file_input
 
 %start expr
-%type <A.t expr> expr
+%type <A.t Ast.expr> expr
 
 %%
 

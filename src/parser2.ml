@@ -1,5 +1,5 @@
 module Make (A : Ast.Annot) = struct
-  module Parser = Parser.Make (A)
+  module Parser = Python2_parser.Make (A)
 
   let parse_from_lexbuf lexbuf =
     let state = Lexer_state.create () in

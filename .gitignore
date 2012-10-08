@@ -9,11 +9,10 @@
 *.a
 
 # example
-example/pydump
-example/pypp
-example/pysimplify
+/examples/pydump
+/examples/pypp
 
 # src
-src/lexer.ml
-src/parser.ml
-src/parser.mli
+/src/lexer.ml
+/src/python2_parser.ml
+/src/python2_parser.mli

@@ -1,7 +1,7 @@
 {
-  open Parser
   open Lexer_state
   open Lexing
+  open Token
 
   let curr_pos lexbuf = lexbuf.lex_start_p
 
