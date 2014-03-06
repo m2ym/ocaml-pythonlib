@@ -311,6 +311,9 @@ and pp_expr fmt = function
   | List (elts, _, _) ->
       fprintf fmt "[@[%a@]]" pp_expr_list elts
 
+  | Tuple ([elt], _, _) ->
+    fprintf fmt "(%a,)" pp_expr elt
+
   | Tuple (elts, _, _) ->
       pp_paren_expr_list fmt elts
 
