@@ -270,7 +270,11 @@ and pp_expr fmt = function
 
   | Call (func, args, keywords, starargs, kwargs, _) ->
       let comma = mk_sep ", " in
-        fprintf fmt "%a(" pp_expr func;
+      let paren =
+        match func with
+        | Name _ | Call _ | Attribute _ | Subscript _ -> false
+        | _ -> true in
+        if paren then fprintf fmt "(%a)(" pp_expr func else fprintf fmt "%a(" pp_expr func;
         List.iter (fprintf fmt "%t%a" comma pp_expr) args;
         List.iter
           (fun (arg, value) ->
