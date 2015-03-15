@@ -12,4 +12,4 @@ linking exception.
 
 ----
 
-Copyright (C) 2011, 2012  Tomohiro Matsuyama <<tomo@cx4a.org>>
+Copyright (C) 2011-2015  Tomohiro Matsuyama <<m2ym.pub@gmail.com>>
