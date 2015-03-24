@@ -4,7 +4,7 @@ BYTE_ENABLED = true
 NATIVE_ENABLED = true
 USE_OCAMLFIND = true
 
-FILES[] = utils ast token lexer lexer_state python2_parser parser2 pretty dump
+FILES[] = utils ast token lexer lexer_state python2_parser parser2 pretty dump simpl
 PACK = $(OCamlPackage $(LIBRARY), $(FILES))
 LIB = $(OCamlLibrary $(LIBRARY), $(rootname $(PACK)))
 OCAMLYACC = ../build-aux/ocamlyacc
